@@ -98,7 +98,7 @@ def _index_to_element(index, ns= None):
     #do appropriate modulo arithmatic 
     for count in range(ns):
         element.append(index%ldim_s)
-        index = (index - element[-1])/ldim_s
+        index = (index - element[-1])//ldim_s
     return element
         
             
@@ -145,7 +145,7 @@ def _combined_to_full(combined):
     
     from basis import ldim_s    
     right = combined%ldim_s
-    left = (combined - right)/ldim_s
+    left = (combined - right)//ldim_s
     
     return left, right
 

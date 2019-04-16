@@ -163,7 +163,7 @@ def _multinominal(bins):
     n = sum(bins)
     combinations  = factorial(n)
     for count_bin in range(len(bins)):
-        combinations = combinations/factorial(bins[count_bin])
+        combinations = combinations//factorial(bins[count_bin])
     return combinations
     
         

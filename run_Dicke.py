@@ -12,7 +12,7 @@ from indices import list_equivalent_elements
 
 #system size
 ntls = 8
-nphot =10
+nphot = 10
 
 #define parameters
 omega=1.0
@@ -42,7 +42,7 @@ from basis import nspins, ldim_p, ldim_s
 #setup inital state and calculate Liouvillian
 L = setup_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, 3) 
 initial = setup_rho(basis(ldim_p, nphot0), basis(ldim_s,1))
-print "setup L"
+print("setup L")
 
 #operators to calculate expectation values for
 na = tensor(create(ldim_p)*destroy(ldim_p), qeye(ldim_s))
@@ -53,8 +53,8 @@ t0=time()
 resultscomp = time_evolve(L, initial, tmax, dt, [na, sz])
 tf=time()-t0
 
-print "Time evollution complete"
-print tf
+print("Time evollution complete")
+print(tf)
 
 #plot time evolution
 figure()
@@ -62,12 +62,12 @@ plot(resultscomp.t, resultscomp.expect[0])
 plot(resultscomp.t, resultscomp.expect[1])
 
 #calculate steady state
-rho_ss = steady(L, initial, tol=1e-9)
+#rho_ss = steady(L, initial, tol=1e-9)
 
-xvec = linspace(-5,5,100)
-w = wigner_comp(rho_ss, xvec, xvec)
+#xvec = linspace(-5,5,100)
+#w = wigner_comp(rho_ss, xvec, xvec)
 
-figure()
-contourf(xvec,xvec,w,100)
+#figure()
+#contourf(xvec,xvec,w,100)
 
 show(block=False)

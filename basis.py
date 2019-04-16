@@ -55,20 +55,21 @@ def setup_L(H, c_ops, num_threads):
                 arglist.append((element, Hfull, c_ops, c_ops_2, c_ops_dag, ldim_p*ldim_p*num_elements))
         
     
+    #uncomment for parallel version
     #allocate a pool of threads
-    if num_threads == None:
-        pool = Pool()
-    else:
-        pool = Pool(num_threads)
+    #if num_threads == None:
+    #    pool = Pool()
+    #else:
+    #    pool = Pool(num_threads)
     #find all the rows of L
-    L_lines = pool.map(calculate_L_fixed, arglist)
+    #L_lines = pool.map(calculate_L_fixed, arglist)
     
-    pool.close()
+    #pool.close()
     
-    #uncomment for serial version
-    #L_lines = []
-    #for count in range(ldim_p*ldim_p*len(indices_elements)):
-    #    L_lines.append(calculate_L_fixed(arglist[count]))
+    #serial version
+    L_lines = []
+    for count in range(ldim_p*ldim_p*len(indices_elements)):
+        L_lines.append(calculate_L_fixed(arglist[count]))
     
     #combine into a big matrix                    
     L = vstack(L_lines)
@@ -116,7 +117,7 @@ def calculate_L_line(element, H, c_ops, c_ops_2, c_ops_dag, length):
                     
                     #get the indices of the equivalent element to the one which couples
                     spinnj = indices_elements_inv[get_equivalent_dm_tuple(concatenate((n1_element[1:], right[1:])))]
-                    rhonj = (length/ldim_p)*n1_element[0] +length/(ldim_p*ldim_p)*right[0] + spinnj
+                    rhonj = (length//ldim_p)*n1_element[0] +length//(ldim_p*ldim_p)*right[0] + spinnj
                     
                     #increment L
                     L_line[0, rhonj] = L_line[0, rhonj] -1j * Hin
@@ -131,7 +132,7 @@ def calculate_L_line(element, H, c_ops, c_ops_2, c_ops_dag, length):
                     n2_calc = True
                     
                     spinin = indices_elements_inv[get_equivalent_dm_tuple(concatenate((left[1:], n2_element[1:])))]
-                    rhoin = (length/ldim_p)*left[0] +length/(ldim_p*ldim_p)*n2_element[0] + spinin
+                    rhoin = (length//ldim_p)*left[0] +length//(ldim_p*ldim_p)*n2_element[0] + spinin
                     L_line[0, rhoin] = L_line[0, rhoin] + 1j * Hnj
                     
                 for count_cop in range(n_cops):
@@ -146,7 +147,7 @@ def calculate_L_line(element, H, c_ops, c_ops_2, c_ops_dag, length):
                             n1_calc = True
                                 
                             spinnj = indices_elements_inv[get_equivalent_dm_tuple(concatenate((n1_element[1:], right[1:])))]
-                            rhonj = (length/ldim_p)*n1_element[0] +length/(ldim_p*ldim_p)*right[0] + spinnj
+                            rhonj = (length//ldim_p)*n1_element[0] +length//(ldim_p*ldim_p)*right[0] + spinnj
                             
                         L_line[0, rhonj] = L_line[0, rhonj] - 0.5*Xin
                         
@@ -159,7 +160,7 @@ def calculate_L_line(element, H, c_ops, c_ops_2, c_ops_dag, length):
                             n2_calc = True
                     
                             spinin = indices_elements_inv[get_equivalent_dm_tuple(concatenate((left[1:], n2_element[1:])))]
-                            rhoin = (length/ldim_p)*left[0] +length/(ldim_p*ldim_p)*n2_element[0] + spinin
+                            rhoin = (length//ldim_p)*left[0] +length//(ldim_p*ldim_p)*n2_element[0] + spinin
                         L_line[0, rhoin] = L_line[0, rhoin] - 0.5*Xnj
                         
                     Xdagnj = get_element(c_ops_dag[count_cop], [count_phot, count_s], [right[0], right[count_ns+1]])
@@ -181,7 +182,7 @@ def calculate_L_line(element, H, c_ops, c_ops_2, c_ops_dag, length):
                                         n2_calc = True
                                             
                                     spinmn = indices_elements_inv[get_equivalent_dm_tuple(concatenate((m1_element[1:], n2_element[1:])))]
-                                    rhomn = (length/ldim_p)*m1_element[0] + length/(ldim_p*ldim_p)*n2_element[0] + spinmn
+                                    rhomn = (length//ldim_p)*m1_element[0] + length//(ldim_p*ldim_p)*n2_element[0] + spinmn
                                     L_line[0, rhomn] = L_line[0, rhomn] + Xim*Xdagnj 
     L_line = csr_matrix(L_line)
     return L_line
