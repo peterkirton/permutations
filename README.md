@@ -3,12 +3,12 @@
 Code for time-evolving and finding steady states of permutation symmetric quantum mechanical problems
 
 Hard Requirements:  
-python 2.7  
+python 3.X  
 modern versions of scipy and numpy  
 
 Soft requirements:  
 qutip (for wigner functions)  
-pylab (for plotting)  
+matplotlib (for plotting)  
 
 An example is given in run_Dicke.py
 
