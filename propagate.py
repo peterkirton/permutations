@@ -92,3 +92,43 @@ def find_gap(L, init=None, maxit=1e6, tol=None, return_ss=False, k=10):
     
     else:
         return val
+
+#calculate spectrum of <op1(t)op2(0)> using initial state op2*rho
+#op2 should be a matrix in the full permutation symmetric space
+#op1 should be an operator 
+def spectrum(L, rho, op1, op2, tlist, ncores):
+    
+    import scipy.fftpack
+    import numpy as np
+    
+    N = len(tlist)
+    dt = tlist[1] - tlist[0]
+    
+    corr = corr_func(L, rho, op1, op2, tlist[-1], dt, ncores)
+    
+
+    F = scipy.fftpack.fft(corr)
+
+    # calculate the frequencies for the components in F
+    f = scipy.fftpack.fftfreq(N, dt)
+
+    # select only indices for elements that corresponds
+    # to positive frequencies
+    indices = np.where(f > 0.0)
+
+    omlist  = 2 * np.pi * f[indices]
+    spec =  2 * dt * np.real(F[indices])
+    
+    
+
+    return spec, omlist
+
+
+def corr_func(L, rho, op1, op2, tend, dt, ncores, op2_big=False):
+    
+    from basis import setup_op
+    if not op2_big:
+        op2 = setup_op(op2, ncores)
+    init =  op2.dot(rho) # need to define this in expec
+    corr = time_evolve(L, init, tend, dt, [op1])
+    return corr.expect[0]

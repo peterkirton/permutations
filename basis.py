@@ -187,7 +187,104 @@ def calculate_L_line(element, H, c_ops, c_ops_2, c_ops_dag, length):
     L_line = csr_matrix(L_line)
     return L_line
     
+def setup_op(H, num_threads):
     
+    """Generate generic Liouvillian for Hamiltonian H and 
+    collapse operators c_ops. Use num_threads processors for 
+    parallelisation.
+    Note c_ops must be a list (even with only one element)"""
+    
+    
+    global nspins, ldim_s, ldim_p
+    from indices import indices_elements, indices_elements_inv, get_equivalent_dm_tuple
+    from numpy import complex, concatenate
+    from scipy.sparse import lil_matrix, csr_matrix, vstack
+    
+    from multiprocessing import Pool
+    
+    num_elements = len(indices_elements)
+        
+    Hfull = H.todense()
+    
+    arglist = []
+    for count_p1 in range(ldim_p):
+        for count_p2 in range(ldim_p):
+            for count in range(num_elements):
+                left = indices_elements[count][0:nspins]
+                right = indices_elements[count][nspins:2*nspins]
+                element = concatenate(([count_p1], left, [count_p2], right))
+                arglist.append((element, Hfull, ldim_p*ldim_p*num_elements))
+        
+    
+    #allocate a pool of threads
+    if num_threads == None:
+        pool = Pool()
+    else:
+        pool = Pool(num_threads)
+    #find all the rows of L
+    L_lines = pool.map(calculate_op_fixed, arglist)
+    
+    pool.close()
+    
+    #uncomment for serial version
+    #L_lines = []
+    #for count in range(ldim_p*ldim_p*len(indices_elements)):
+    #    L_lines.append(calculate_L_fixed(arglist[count]))
+    
+    #combine into a big matrix                    
+    L = vstack(L_lines)
+    
+    return L
+    
+def calculate_op_fixed(args):
+    return calculate_op_line(*args)
+    
+def calculate_op_line(element, H, length):
+    
+    global nspins, ldim_s, ldim_p
+    from indices import indices_elements, indices_elements_inv, get_equivalent_dm_tuple
+    from numpy import zeros, complex, concatenate, copy
+    from scipy.sparse import lil_matrix, csr_matrix
+    
+       
+    left = element[0:nspins+1]
+    right = element[nspins+1:2*nspins+2]
+    tol = 1e-10
+    
+    L_line = zeros((1, length), dtype = complex)
+
+        
+    for count_phot in range(ldim_p):
+        for count_s in range(ldim_s):
+            for count_ns in range(nspins):
+                    
+                #keep track of if we have done the n1/n2 calculations
+                n1_calc = False
+                n2_calc = False
+                    
+                #calculate appropriate matrix elements of H
+                Hin = get_element(H, [left[0], left[count_ns+1]], [count_phot, count_s])
+                    
+                #only bother if H is non-zero
+                if abs(Hin)>tol:
+                    #work out which elements of rho this couples to
+                    #note the resolution of identity here is small because H only acts between photon and one spin
+                    n1_element = copy(left)
+                    n1_element[0] = count_phot
+                    n1_element[count_ns+1] = count_s
+                    n1_calc = True
+                    
+                    #get the indices of the equivalent element to the one which couples
+                    spinnj = indices_elements_inv[get_equivalent_dm_tuple(concatenate((n1_element[1:], right[1:])))]
+                    rhonj = (length//ldim_p)*n1_element[0] +length//(ldim_p*ldim_p)*right[0] + spinnj
+                    
+                    #increment L
+                    L_line[0, rhonj] = L_line[0, rhonj] + Hin
+                    
+                    
+                
+    L_line = csr_matrix(L_line)
+    return L_line
 
 
 def setup_rho(rho_p, rho_s):
