@@ -1,5 +1,19 @@
 
+def setup_counterlaser(lamb, gam_c, gam_d, num_threads = None):
+    """Generate Liouvillian for counter rotating interaction, lamb(a*sigmam + adag*sigmap)"""
+    
+    from operators import tensor, qeye, destroy, create, sigmap, sigmam, sigmaz
+    from basis import nspins, ldim_s, ldim_p, setup_L
+    from numpy import sqrt
+        
+    #note terms with just photon operators need to be divided by nspins
+    H = lamb * (tensor(create(ldim_p), sigmap()) +  tensor(destroy(ldim_p), sigmam()))
+    
+    c_ops=[]
+    c_ops.append(sqrt(gam_c/nspins)*tensor(destroy(ldim_p), qeye(ldim_s)))
+    c_ops.append(sqrt(gam_d)*tensor(qeye(ldim_p), sigmam()))
 
+    return setup_L(H, c_ops, num_threads)
 
 
 def setup_laser(g, Delta, kappa, gam_dn, gam_up, gam_phi, num_threads = None):
@@ -45,7 +59,7 @@ def setup_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, num_threads = N
     c_ops.append(sqrt(gam_dn)*tensor(qeye(ldim_p), sigmam()))
 
     return setup_L(H, c_ops, num_threads)
-    
+
 def setup_pumped_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, gam_up, num_threads = None):
     """Generate Liouvillian for Dicke model wih pumping
     H = omega*adag*a + omega0*sz  + g*(a*sp + adag*sm) + gp*(a*sm + adag*sp) + U *adag*a*sz
