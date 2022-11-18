@@ -37,6 +37,7 @@ gam_up=0.8
 nphot0 = 0
 tmax = 20
 dt = 0.1
+nproc = None
 
 # setup basis with ntls spin, each of Hilbert space dimentsion 
 # 2 and photon with dimension nphot
