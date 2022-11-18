@@ -61,6 +61,7 @@ print("Time evolution complete in {:.0f}s".format(tf))
 t = resultscomp.t
 expect = resultscomp.expect
 
+num_plots = len(resultscomp.expect)
 
 # plot dynamics of operators in ops
 fig, axes = plt.subplots(num_plots, figsize=(5,8), sharex=True)
