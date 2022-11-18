@@ -1,31 +1,44 @@
 convert_rho = None
+convert_rho_dic = {}
+import numpy as np
+from itertools import permutations
 
 
-def expect_comp(rho, ops):
+def expect_comp(rho_list, ops):
     """Calculate expectation values of operators in ops
-    from a compressed density matrix rho"""
+    from compressed density matrices in rho_list"""
     
     from operators import expect, vector_to_operator
     from basis import ldim_p, ldim_s
     
-    global convert_rho
-    
-    if convert_rho is None:
-        raise TypeError('need to run setup_convert_rho()')
+    global convert_rho_dic
 
+    # converted densities matrices (different operators may have different number of
+    # spins; we need a list of reduced density matrices for each number of spins)
+    rhos_converted_dic = {}
+    
     output = []
-    for count_ops in range(len(ops)):
-        output.append([])
-    
-    for count in range(len(rho)):
-        
-        #get single site density matrix by multiplying with conversion matrix
-        rho_ss = convert_rho.dot(rho[count])
-        
-        rho_ss = vector_to_operator(rho_ss)
+    for op in ops:
+        # number of spins in the target rdm
+        nrs = int(np.log(op.shape[0]//ldim_p)/np.log(ldim_s))
 
-        for count_ops in range(len(ops)):
-            output[count_ops].append(expect(rho_ss, ops[count_ops]))
+        if nrs not in convert_rho_dic:
+            raise TypeError('need to run setup_convert_rho_nrs({})'.format(nrs))
+
+        # Only convert compressed matrices in rho
+        if nrs not in rhos_converted_dic:
+            rhos_converted_dic[nrs] = []
+            for count in range(len(rho_list)):
+                rho_nrs = convert_rho_dic[nrs].dot(rho_list[count])
+                rho_nrs = vector_to_operator(rho_nrs)
+                rhos_converted_dic[nrs].append(rho_nrs)
+        
+        one_output = [] 
+        rhos_converted = rhos_converted_dic[nrs]
+        for count in range(len(rho_list)):
+            one_output.append(expect(rhos_converted[count], op))
+        output.append(one_output)
+
     return output
 
 
@@ -76,84 +89,150 @@ def photon_dist(rho):
     pops = rho_q.data.diagonal()
     
     return pops
-    
+   
+def setup_convert_rhos_from_ops(ops):
+    """Setup conversion matrices required to calculate reduced density matrices for
+    each number of spins occurring in operators in ops. Convenient to run instead
+    of separate calls to setup_convert_rho_nrs().""" 
+    from basis import ldim_p, ldim_s
+    for op in ops:
+        # number of spins in the target rdm
+        nrs = int(np.log(op.shape[0]//ldim_p)/np.log(ldim_s))
+        # check hasn't already been calculated
+        if nrs in convert_rho_dic:
+            continue
+        setup_convert_rho_nrs(nrs)
 
 def setup_convert_rho():
-    
-    """calculate matrix for converting from compressed full to single site density matrices
-    This function needs to be run at the start of each calculation"""  
+    # retained for compatibility 
+    global convert_rho
+    convert_rho = setup_convert_rho_nrs(1)
+
+
+def setup_convert_rho_nrs(nrs=1):
+    """Calculate matrix for converting from compressed full to nrs site density matrices.
+    Result is stored in global dictionary convert_rho_dic with key nrs.
+    Must be run before any calculation requiring the reduced density matrix with nrs spin.
+    """  
     
     from basis import nspins, ldim_s, ldim_p
-    from indices import  indices_elements
-    from numpy import concatenate, copy, array_equal, sort, bincount, argmax, float64
+    from indices import indices_elements
     from scipy.sparse import lil_matrix
-    
-    global convert_rho
-        
-    convert_rho = lil_matrix(((ldim_p*ldim_s)**2, ldim_p*ldim_p*len(indices_elements)), dtype = float64)
+
+    assert type(nrs) == int, "Argument 'nrs' must be int"
+    assert nrs >= 0, "Argument 'nrs' must be non-negative"
+    assert nspins >= nrs, "Number of spins in reduced density matrix ({}) cannot "\
+            "exceed total number of spins ({})".format(nrs, nspins)
+
+    global convert_rho_dic
+
+    convert_rho_nrs = lil_matrix(((ldim_p*ldim_s**nrs)**2, ldim_p*ldim_p*len(indices_elements)), dtype=np.float64)
+
+    convert_rho_dic[nrs] = convert_rho_nrs
+
     for count_p1 in range(ldim_p):
         for count_p2 in range(ldim_p):
             for count in range(len(indices_elements)):
-
-                element = concatenate(([count_p1], indices_elements[count][0:nspins], [count_p2], indices_elements[count][nspins:2*nspins]))
+                element = np.concatenate(([count_p1], indices_elements[count][0:nspins], 
+                                          [count_p2], indices_elements[count][nspins:2*nspins]))
                 element_index = ldim_p*len(indices_elements)*count_p1 + len(indices_elements)*count_p2 + count
-                left = element[0:nspins+1]
-                right = element[nspins+1:2*nspins+2]
-        
-                #check if there is only one off diagonal element
-                diff = sort(abs(left[1:] - right[1:]))
-        
-                if (diff[-2] == 0 and diff[-1]>0):
-            
-                    #find location of off-diagonal element
-                    loc = argmax(abs(left[1:] - right[1:]))
-            
-                    #shift to spin0
-                    left[1], left[loc+1] = left[loc+1], left[1]
-                    right[1], right[loc+1] = right[loc+1], right[1]
-            
-                    small_element = copy(left[2:])
-                    #bin element so that [1,0,0,1,1] = [2,3]
-                    ldim_counts = bincount(small_element)
-                    combinations  = _multinominal(ldim_counts)
-            
-                    #calculate current position in column stacked dm
-                    column_index = left[0]*ldim_s + left[1] + ldim_s*ldim_p*(right[0]*ldim_s + right[1])
-                    convert_rho[column_index, element_index] = combinations
-        
-                #check if element is diagonal in all space except photon
-                if array_equal(left[1:], right[1:]):
-            
-                    #calculate number of combinations for unchanged element
-                    small_element = copy(left[2:])
-                    ldim_counts = bincount(small_element)
-                    combinations  = _multinominal(ldim_counts)
+                bra = element[1:nspins+1] # elements for spin bra
+                ket = element[nspins+2:2*nspins+2] # elements for spin ket
+                diff_arg = np.asarray(bra != ket).nonzero()[0] # indices where bra and ket differ (axis=0)
+                diff_num = len(diff_arg) # number of different spin elements
+                if diff_num > nrs:
+                    continue
+                # get elements that differ
+                diff_bra = bra[diff_arg]
+                diff_ket = ket[diff_arg]
+                same = np.delete(bra, diff_arg) # common elements
+                # fill all matrix elements in column element_index according to different and same spins
+                add_all(nrs, count_p1, count_p2, diff_bra, diff_ket, same, element_index)
+    
+    convert_rho_nrs = convert_rho_nrs.tocsr()
 
-            
-                    #calculate current position in column stacked dm
-                    column_index = left[0]*ldim_s + left[1] + ldim_s*ldim_p*(right[0]*ldim_s + right[1])
-                    convert_rho[column_index, element_index] = combinations
-            
-
-            
-                    #make sure that the element in spin zero is accounted for
-                    if len(ldim_counts<left[1]+1):
-                        ldim_counts.resize([left[1]+1])
-                    #swap spin 0 for other spins and work out combinations
-                    for ii in range(len(ldim_counts)):
-                        #only swap if there is a spin to swap with
-                        if ldim_counts[ii] > 0:
-                        
-                            ldim_counts_temp = copy(ldim_counts)
-                            ldim_counts_temp[ii] = ldim_counts_temp[ii] - 1
-                            ldim_counts_temp[left[1]] = ldim_counts_temp[left[1]] + 1
-                            combinations  = _multinominal(ldim_counts_temp)
-                            column_index = left[0]*ldim_s + ii + ldim_s*ldim_p*(right[0]*ldim_s + ii)
-                            convert_rho[column_index, element_index] = combinations
-            
-    convert_rho = convert_rho.tocsr()
+    return convert_rho_nrs
 
 
+def add_all(nrs, count_p1, count_p2, bra, ket, same, element_index, s_start=0):
+    """Populate all entries in conversion_matrix with row indices associated with permutations of spin values
+    |bra> and <ket| and column index element_index according to the number of permutations of spin values in 
+    'same'.
+
+    nrs is the number of spins in the target reduced density matrix ('number reduced spins').
+    """
+    from basis import ldim_s
+    if len(bra) == nrs:
+        # add contributions from same to rdm at |bra><ket|
+        add_to_convert_rho_dic(nrs, count_p1, count_p2,
+                               bra, ket, same, element_index)
+        return
+    # current |bra> too short for rdm, so move element from same to |bra> (and <ket|)
+    # iterate through all possible values of spin...
+    for s in range(s_start, ldim_s):
+        s_index = next((i for i,sa in enumerate(same) if sa==s), None)
+        # ...but only act on the spins that are actually in same
+        if s_index is None:
+            continue
+        # extract spin value from same, append to bra and ket
+        tmp_same = np.delete(same, s_index)
+        tmp_bra = np.append(bra, s)
+        tmp_ket = np.append(ket, s)
+        # repeat until |bra> and <ket| are correct length for rdm
+        add_all(nrs, count_p1, count_p2, tmp_bra, tmp_ket, tmp_same, element_index, s_start=s)
+
+def add_to_convert_rho_dic(nrs, count_p1, count_p2, diff_bra, diff_ket, same, element_index):
+    """Populate entry in conversion matrix with row index corresponding to |count_p1><count_p2|
+    for the photon state and |diff_bra><diff_ket| for the spin states and column index 
+    element_index according to the number of permutations of spin values in 'same.'
+
+    nrs is the number of spins in the target reduced density matrix ('number reduced spins').
+    """
+    global convert_rho_dic
+    # conversion matrix at this nrs
+    convert_rho_nrs = convert_rho_dic[nrs]
+    # number of permutations of spins in same, each of which contributes one unit 
+    combinations = _multinominal(np.bincount(same))
+    # get list of row indices combinations should apply for (all permutations of spins)
+    row_indices = get_all_row_indices(count_p1, count_p2, diff_bra, diff_ket)
+    for row_index in row_indices:
+        convert_rho_nrs[row_index, element_index] = combinations
+
+def get_all_row_indices(count_p1, count_p2, spin_bra, spin_ket):
+    """Get all row indices of the conversion matrix corresponding to |count_p1><count_p2|
+    for the photon state and |diff_bra><diff_ket| for the spin states."""
+    assert len(spin_bra)==len(spin_ket)
+    nrs = len(spin_bra)
+    s_indices = np.arange(nrs)
+    row_indices = []
+    for perm_indices in permutations(s_indices):
+        index_list = list(perm_indices)
+        row_indices.append(get_rdm_index(count_p1, count_p2,
+                                         spin_bra[index_list],
+                                         spin_ket[index_list]))
+    return row_indices
+
+
+def get_rdm_index(count_p1, count_p2, spin_bra, spin_ket):
+    """Calculate row index in conversion matrix for element |count_p1><count_p2| for the 
+    photon part and |spin_bra><spin_ket| for the spin part.
+
+    This index is according to column-stacking convention used by qutip - see for example
+
+    A=qutip.Qobj(numpy.arange(4).reshape((2, 2))
+    print(qutip.operator_to_vector(A))
+    """
+    from basis import ldim_p, ldim_s
+    bra = np.concatenate(([count_p1],spin_bra))
+    ket = np.concatenate(([count_p2],spin_ket))
+    row = 0
+    column = 0
+    nrs = len(bra)-1
+    for i in range(nrs+1):
+        j = nrs-i
+        row += bra[j] * ldim_s**i
+        column += ket[j] * ldim_s**i
+    return row + column * ldim_p * ldim_s**nrs
 
 def _multinominal(bins):
     """calculate multinominal coeffcient"""
