@@ -15,6 +15,7 @@ def setup_basis(ns, ls, lp):
     ldim_s = ls
     ldim_p = lp
     nspins = ns
+    assert nspins > 1, "Number of two-level systems must be greater than 1."
 
     
 def setup_L(H, c_ops, num_threads):
