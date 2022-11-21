@@ -18,7 +18,7 @@ def setup_basis(ns, ls, lp):
     assert nspins > 1, "Number of two-level systems must be greater than 1."
 
     
-def setup_L(H, c_ops, num_threads):
+def setup_L(H, c_ops, num_threads, progress=False):
     
     """Generate generic Liouvillian for Hamiltonian H and 
     collapse operators c_ops. Use num_threads processors for 
@@ -67,10 +67,15 @@ def setup_L(H, c_ops, num_threads):
     
     #pool.close()
     
+    if progress:
+        from propagate import Progress
+        bar = Progress(ldim_p**2 * num_elements, name='Constructing Liouvillian L...')
     #serial version
     L_lines = []
     for count in range(ldim_p*ldim_p*len(indices_elements)):
         L_lines.append(calculate_L_fixed(arglist[count]))
+        if progress:
+            bar.update()
     
     #combine into a big matrix                    
     L = vstack(L_lines)

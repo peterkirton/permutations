@@ -4,8 +4,28 @@ class Results:
         self.t = []
         self.expect = []
 
+class Progress:
+    def __init__(self, total, name='', start=0):
+        self.start = start
+        self.step = start
+        self.end = total
+        self.name = name
+        self.percent = int(100*start//total)
 
-def time_evolve(L, initial, tend, dt, expect_oper=None, atol=1e-5, rtol=1e-5):
+    def update(self, step=None):
+        if step is not None:
+            self.step = step
+        else:
+            self.step += 1
+        self.percent = int(100*self.step/self.end)
+        if self.step == self.start+1:
+            print('{}{:4d}%'.format(self.name, self.percent), end='', flush=True)
+        else:
+            print('\b\b\b\b\b{:4d}%'.format(self.percent), end='', flush=True)
+        if self.step == self.end:
+            print('', flush=True)
+
+def time_evolve(L, initial, tend, dt, expect_oper=None, atol=1e-5, rtol=1e-5, progress=False):
     """time evolve matrix L from initial condition initial with step dt to tend"""
     
     from scipy.integrate import ode
@@ -21,33 +41,33 @@ def time_evolve(L, initial, tend, dt, expect_oper=None, atol=1e-5, rtol=1e-5):
     # Record initial values
     output.t.append(r.t)
     output.rho.append(initial)
+    ntimes = int(tend/dt)+1
+    if progress:
+        bar = Progress(ntimes, name='Time evolution under L...', start=1)
     
-
-
     if expect_oper == None:
         while r.successful() and r.t < tend:
             output.rho.append(r.integrate(r.t+dt))
             output.t.append(r.t)
+            if progress:
+                bar.update()
         return output
     else:
-        ntimes = int(tend/dt)
-        n_t=0
         output.expect = zeros((len(expect_oper), ntimes), dtype=complex)
+        output.expect[:,0] = array(expect_comp([initial], expect_oper)).flatten()
+        n_t=1
         while r.successful() and n_t<ntimes:
             rho = r.integrate(r.t+dt)
             output.expect[:,n_t] = array(expect_comp([rho], expect_oper)).flatten()
             output.t.append(r.t)
             output.rho.append(rho)
             n_t += 1
+            if progress:
+                bar.update()
         return output
-
 
 def _intfunc(t, y, L):
     return (L.dot(y))
-    
-    
-
-    
 
 def steady(L, init=None, maxit=1e6, tol=None):
     
