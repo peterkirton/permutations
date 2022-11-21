@@ -86,4 +86,4 @@ for i in range(num_plots):
     else:
         axes[i].plot(plot_t, expect[i].real)
         axes[i].set_ylabel(r'\rm{{Re}}\({}\)'.format(labels[i]))
-fig.savefig('MultiSpinTest.pdf', bbox_inches='tight')
+fig.savefig('multispin_test.pdf', bbox_inches='tight')

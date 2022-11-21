@@ -1,5 +1,5 @@
 
-def setup_counterlaser(lamb, gam_c, gam_d, num_threads = None):
+def setup_counterlaser(lamb, gam_c, gam_d, num_threads = None, progress = False):
     """Generate Liouvillian for counter rotating interaction, lamb(a*sigmam + adag*sigmap)"""
     
     from operators import tensor, qeye, destroy, create, sigmap, sigmam, sigmaz
@@ -13,7 +13,7 @@ def setup_counterlaser(lamb, gam_c, gam_d, num_threads = None):
     c_ops.append(sqrt(gam_c/nspins)*tensor(destroy(ldim_p), qeye(ldim_s)))
     c_ops.append(sqrt(gam_d)*tensor(qeye(ldim_p), sigmam()))
 
-    return setup_L(H, c_ops, num_threads)
+    return setup_L(H, c_ops, num_threads, progress)
 
 
 def setup_laser(g, Delta, kappa, gam_dn, gam_up, gam_phi, num_threads = None):
