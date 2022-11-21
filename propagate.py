@@ -5,7 +5,7 @@ class Results:
         self.expect = []
 
 
-def time_evolve(L, initial, tend, dt, expect_oper=None):
+def time_evolve(L, initial, tend, dt, expect_oper=None, atol=1e-5, rtol=1e-5):
     """time evolve matrix L from initial condition initial with step dt to tend"""
     
     from scipy.integrate import ode
@@ -15,9 +15,12 @@ def time_evolve(L, initial, tend, dt, expect_oper=None):
     #L=L.todense()
     
     t0 = 0
-    r = ode(_intfunc).set_integrator('zvode', method='bdf', atol=1e-5, rtol=1e-5)
+    r = ode(_intfunc).set_integrator('zvode', method='bdf', atol=atol, rtol=rtol)
     r.set_initial_value(initial, t0).set_f_params(L)
     output = Results()
+    # Record initial values
+    output.t.append(r.t)
+    output.rho.append(initial)
     
 
 
@@ -34,6 +37,7 @@ def time_evolve(L, initial, tend, dt, expect_oper=None):
             rho = r.integrate(r.t+dt)
             output.expect[:,n_t] = array(expect_comp([rho], expect_oper)).flatten()
             output.t.append(r.t)
+            output.rho.append(rho)
             n_t += 1
         return output
 
