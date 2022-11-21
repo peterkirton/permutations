@@ -41,6 +41,29 @@ def expect_comp(rho_list, ops):
 
     return output
 
+def get_rdm(rho_list, nrs=1, photon=True):
+    from operators import expect, vector_to_operator
+    from basis import ldim_p, ldim_s
+    
+    global convert_rho_dic
+    rdms = []
+    
+    if nrs not in convert_rho_dic:
+        raise TypeError('need to run setup_convert_rho_nrs({})'.format(nrs))
+    for count in range(len(rho_list)):
+        rho_nrs = convert_rho_dic[nrs].dot(rho_list[count])
+        rho_nrs = vector_to_operator(rho_nrs)
+        if not photon:
+            # trace out photon
+            sdim = ldim_s**nrs
+            rho_nrs_noph = rho_nrs[0:sdim,0:sdim]
+            for p in range(1, ldim_p):
+                pp1 = p + 1
+                rho_nrs_noph += rho_nrs[p*sdim:pp1*sdim,p*sdim:pp1*sdim]
+            rho_nrs = rho_nrs_noph
+        rdms.append(rho_nrs)
+    return rdms
+
 
 def wigner_comp(rho, xvec, yvec):
     """calculate wigner function of central site from density matrix rho
