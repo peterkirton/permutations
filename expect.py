@@ -3,7 +3,6 @@ convert_rho_dic = {}
 import numpy as np
 from itertools import permutations
 
-
 def expect_comp(rho_list, ops):
     """Calculate expectation values of operators in ops
     from compressed density matrices in rho_list"""
@@ -41,7 +40,11 @@ def expect_comp(rho_list, ops):
 
     return output
 
-def get_rdm(rho_list, nrs=1, photon=True):
+def get_rdms(rho_list, nrs=1, photon=True):
+    """Extract reduced density matrices for nrs spins including the photon (photon=True)
+    or not (photon=False) from a list rho_list of compressed density matrices (as returned
+    by time_evolve)."""
+
     from operators import expect, vector_to_operator
     from basis import ldim_p, ldim_s
     
@@ -63,7 +66,6 @@ def get_rdm(rho_list, nrs=1, photon=True):
             rho_nrs = rho_nrs_noph
         rdms.append(rho_nrs)
     return rdms
-
 
 def wigner_comp(rho, xvec, yvec):
     """calculate wigner function of central site from density matrix rho
@@ -88,8 +90,6 @@ def wigner_comp(rho, xvec, yvec):
     w = wigner(rho_q, xvec, yvec)
     
     return w
-
-
 
 def photon_dist(rho):
     """return diagonals of photon density matrix"""
@@ -127,15 +127,22 @@ def setup_convert_rhos_from_ops(ops):
         setup_convert_rho_nrs(nrs)
 
 def setup_convert_rho():
+    """Setup conversion matrix for compressed full to single site density matrix.
+    Must be run at the start of any calculation.
+
+    Note this function simply invokes setup_convert_rho_nrs(1) but is retained for compatibility."""
     # retained for compatibility 
     global convert_rho
     convert_rho = setup_convert_rho_nrs(1)
 
 
 def setup_convert_rho_nrs(nrs=1):
-    """Calculate matrix for converting from compressed full to nrs site density matrices.
+    """Setup conversion matrix for compressed full to nrs site density matrix.
     Result is stored in global dictionary convert_rho_dic with key nrs.
+
     Must be run before any calculation requiring the reduced density matrix with nrs spin.
+    In particular, setup_convert_rho_nrs(1) (or setup_convert_rho()) must be run before
+    any calculation.
     """  
     
     from basis import nspins, ldim_s, ldim_p
@@ -175,7 +182,6 @@ def setup_convert_rho_nrs(nrs=1):
     convert_rho_nrs = convert_rho_nrs.tocsr()
 
     return convert_rho_nrs
-
 
 def add_all(nrs, count_p1, count_p2, bra, ket, same, element_index, s_start=0):
     """Populate all entries in conversion_matrix with row indices associated with permutations of spin values
@@ -268,7 +274,3 @@ def _multinominal(bins):
         combinations = combinations//factorial(bins[count_bin])
     return combinations
     
-        
-        
-        
-
