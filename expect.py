@@ -40,13 +40,18 @@ def expect_comp(rho_list, ops):
 
     return output
 
-def get_rdms(rho_list, nrs=1, photon=True):
+def get_rdms(rho_list, nrs=1, photon=True, dense=True):
     """Extract reduced density matrices for nrs spins including the photon (photon=True)
     or not (photon=False) from a list rho_list of compressed density matrices (as returned
     by time_evolve)."""
 
     from operators import expect, vector_to_operator
-    from basis import ldim_p, ldim_s
+    from basis import nspins, ldim_p, ldim_s
+
+    assert type(nrs) == int, "Argument 'nrs' must be int"
+    assert nrs >= 0, "Argument 'nrs' must be non-negative"
+    assert nspins >= nrs, "Number of spins in reduced density matrix ({}) cannot "\
+            "exceed total number of spins ({})".format(nrs, nspins)
     
     global convert_rho_dic
     rdms = []
@@ -64,6 +69,8 @@ def get_rdms(rho_list, nrs=1, photon=True):
                 pp1 = p + 1
                 rho_nrs_noph += rho_nrs[p*sdim:pp1*sdim,p*sdim:pp1*sdim]
             rho_nrs = rho_nrs_noph
+        if dense:
+            rho_nrs = rho_nrs.toarray()
         rdms.append(rho_nrs)
     return rdms
 
