@@ -5,23 +5,32 @@ class Results:
         self.expect = []
 
 class Progress:
-    def __init__(self, total, name='', start=0):
-        self.start = start
-        self.step = start
-        self.end = total
-        self.name = name
-        self.percent = int(100*start//total)
+    def __init__(self, total, description='', start_step=0):
+        self.description = description
+        self.step = start_step
+        self.end = total-1
+        self.percent = self.calc_percent()
+        self.started = False
+
+    def calc_percent(self):
+        return int(100*self.step/self.end)
 
     def update(self, step=None):
-        if step is not None:
-            self.step = step
-        else:
+        # print a description at the start of the calculation
+        if not self.started:
+            print('{}{:4d}%'.format(self.description, self.percent), end='', flush=True)
+            self.started = True
+            return
+        # progress one step or to the specified step
+        if step is None:
             self.step += 1
-        self.percent = int(100*self.step/self.end)
-        if self.step == self.start+1:
-            print('{}{:4d}%'.format(self.name, self.percent), end='', flush=True)
         else:
-            print('\b\b\b\b\b{:4d}%'.format(self.percent), end='', flush=True)
+            self.step = step
+        percent = self.calc_percent()
+        # only waste time printing if % has actually increased one integer
+        if percent > self.percent:
+            print('\b\b\b\b\b{:4d}%'.format(percent), end='', flush=True)
+            self.percent = percent
         if self.step == self.end:
             print('', flush=True)
 
@@ -43,7 +52,7 @@ def time_evolve(L, initial, tend, dt, expect_oper=None, atol=1e-5, rtol=1e-5, pr
     output.rho.append(initial)
     ntimes = int(tend/dt)+1
     if progress:
-        bar = Progress(ntimes, name='Time evolution under L...', start=1)
+        bar = Progress(ntimes, description='Time evolution under L...', start_step=1)
     
     if expect_oper == None:
         while r.successful() and r.t < tend:

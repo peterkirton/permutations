@@ -69,7 +69,7 @@ def setup_L(H, c_ops, num_threads, progress=False):
     
     if progress:
         from propagate import Progress
-        bar = Progress(ldim_p**2 * num_elements, name='Constructing Liouvillian L...')
+        bar = Progress(ldim_p**2 * num_elements, description='Constructing Liouvillian L...')
     #serial version
     L_lines = []
     for count in range(ldim_p*ldim_p*len(indices_elements)):
