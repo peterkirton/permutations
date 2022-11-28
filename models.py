@@ -35,6 +35,25 @@ def setup_laser(g, Delta, kappa, gam_dn, gam_up, gam_phi, num_threads = None):
     return setup_L(H, c_ops, num_threads)
     
 
+def setup_3ls(nu, g, kappa, pump, num_threads = None, progress = False):
+    
+    """Generate Liouvillian for 3-level system
+    H = nu*adag*a + g(a*create(3) + h.c.)
+    c_ops = kappa L[a] + pump L[create(3)]
+    """
+    
+    from operators import tensor, qeye, destroy, create, sigmap, sigmam, sigmaz
+    from basis import nspins, ldim_s, ldim_p, setup_L
+    from numpy import sqrt
+    
+    H = nu * tensor(create(ldim_p) * destroy(ldim_p), qeye(ldim_s)) / nspins\
+            + g * tensor(create(ldim_p), destroy(ldim_s)) + g * tensor(destroy(ldim_p), create(ldim_s))
+    c_ops = [
+        sqrt(kappa/nspins)*tensor(destroy(ldim_p), qeye(ldim_s)),
+        sqrt(pump)*tensor(qeye(ldim_p), create(ldim_s)),
+            ]
+        
+    return setup_L(H, c_ops, num_threads, progress)
     
 def setup_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, num_threads = None):
     """Generate Liouvillian for Dicke model
