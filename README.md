@@ -9,6 +9,7 @@ modern versions of scipy and numpy
 Soft requirements:  
 qutip (for wigner functions)  
 pylab (for plotting)  
+tqdm  (for progress bar in parallel construction of Liouvillian)
 
 An example is given in run_Dicke.py
 
