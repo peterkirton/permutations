@@ -313,7 +313,7 @@ def setup_rho(rho_p, rho_s):
     with photon in state rho_p and all spins in state rho_s"""
     
     from indices import indices_elements
-    from numpy import zeros, complex
+    from numpy import zeros
     
         
     num_elements = len(indices_elements)
