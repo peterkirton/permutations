@@ -82,7 +82,7 @@ def steady(L, init=None, maxit=1e6, tol=None):
     
     """calculate steady state of L using sparse eignevalue solver"""
 
-    rho = find_gap(L, init, maxiy, tol, return_ss=True)   
+    rho = find_gap(L, init, maxit, tol, return_ss=True)   
 
     return rho
     
