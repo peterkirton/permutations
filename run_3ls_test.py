@@ -35,7 +35,7 @@ setup_convert_rho()
 from basis import nspins, ldim_p, ldim_s
 
 t0=time()
-L = setup_3ls(nu, g, kappa, pump, progress=True) 
+L = setup_3ls(nu, g, kappa, pump, progress=True, parallel=True) 
 # setup initial state nphot0 photons and spins down
 initial = setup_rho(basis(ldim_p, nphot0), basis(ldim_s,1))
 print('setup L and basis in {:.1f}s'.format(time()-t0), flush=True)
