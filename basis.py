@@ -103,7 +103,7 @@ def calculate_L_line(element, H, c_ops, c_ops_2, c_ops_dag, length):
     
     global nspins, ldim_s, ldim_p
     from indices import indices_elements, indices_elements_inv, get_equivalent_dm_tuple
-    from numpy import zeros, complex, concatenate, copy
+    from numpy import zeros, concatenate, copy
     from scipy.sparse import lil_matrix, csr_matrix
     
     n_cops = len(c_ops)
@@ -217,7 +217,7 @@ def setup_op(H, num_threads):
     
     global nspins, ldim_s, ldim_p
     from indices import indices_elements, indices_elements_inv, get_equivalent_dm_tuple
-    from numpy import complex, concatenate
+    from numpy import concatenate
     from scipy.sparse import lil_matrix, csr_matrix, vstack
     
     from multiprocessing import Pool
@@ -263,7 +263,7 @@ def calculate_op_line(element, H, length):
     
     global nspins, ldim_s, ldim_p
     from indices import indices_elements, indices_elements_inv, get_equivalent_dm_tuple
-    from numpy import zeros, complex, concatenate, copy
+    from numpy import zeros, concatenate, copy
     from scipy.sparse import lil_matrix, csr_matrix
     
        
