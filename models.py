@@ -16,7 +16,7 @@ def setup_counterlaser(lamb, gam_c, gam_d, num_threads = None, progress = False,
     return setup_L(H, c_ops, num_threads, progress, parallel)
 
 
-def setup_laser(g, Delta, kappa, gam_dn, gam_up, gam_phi, num_threads = None):
+def setup_laser(g, Delta, kappa, gam_dn, gam_up, gam_phi, num_threads = None, progress = False, parallel = False):
     
     """Generate Liouvillian for laser problem
     H = Delta*sigmaz + g(a*sigmap + adag*sigmam)
@@ -32,7 +32,7 @@ def setup_laser(g, Delta, kappa, gam_dn, gam_up, gam_phi, num_threads = None):
     c_ops = [sqrt(kappa/nspins)*tensor(destroy(ldim_p), qeye(ldim_s)), sqrt(gam_dn)*tensor(qeye(ldim_p), sigmam()), sqrt(gam_up)*tensor(qeye(ldim_p), sigmap())]
     c_ops.append(sqrt(gam_phi)*tensor(qeye(ldim_p), sigmaz()))
         
-    return setup_L(H, c_ops, num_threads)
+    return setup_L(H, c_ops, num_threads, progress, parallel)
     
 
 def setup_3ls(nu, g, kappa, pump, num_threads = None, progress = False, parallel = False):
@@ -55,7 +55,7 @@ def setup_3ls(nu, g, kappa, pump, num_threads = None, progress = False, parallel
         
     return setup_L(H, c_ops, num_threads, progress, parallel)
     
-def setup_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, num_threads = None):
+def setup_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, num_threads = None, progress = False, parallel = False):
     """Generate Liouvillian for Dicke model
     H = omega*adag*a + omega0*sz  + g*(a*sp + adag*sm) + gp*(a*sm + adag*sp) + U *adag*a*sz
     c_ops = kappa L[a] + gam_phi L[sigmaz] + gam_dn L[sigmam]"""
@@ -77,9 +77,10 @@ def setup_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, num_threads = N
     c_ops.append(sqrt(gam_phi)*tensor(qeye(ldim_p), sigmaz()))
     c_ops.append(sqrt(gam_dn)*tensor(qeye(ldim_p), sigmam()))
 
-    return setup_L(H, c_ops, num_threads)
+    return setup_L(H, c_ops, num_threads, progress, parallel)
 
-def setup_pumped_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, gam_up, num_threads = None):
+def setup_pumped_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, gam_up, num_threads = None,
+                       progress = False, parallel = False):
     """Generate Liouvillian for Dicke model wih pumping
     H = omega*adag*a + omega0*sz  + g*(a*sp + adag*sm) + gp*(a*sm + adag*sp) + U *adag*a*sz
     c_ops = kappa L[a] + gam_phi L[sigmaz] + gam_dn L[sigmam] + gam_up L[sigmap]"""
@@ -102,4 +103,4 @@ def setup_pumped_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, gam_up, 
     c_ops.append(sqrt(gam_dn)*tensor(qeye(ldim_p), sigmam()))
     c_ops.append(sqrt(gam_up)*tensor(qeye(ldim_p), sigmap()))
 
-    return setup_L(H, c_ops, num_threads)
+    return setup_L(H, c_ops, num_threads, progress, parallel)
