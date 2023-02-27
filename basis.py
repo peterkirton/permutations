@@ -18,7 +18,7 @@ def setup_basis(ns, ls, lp):
     assert nspins > 1, "Number of spins must be greater than 1."
 
     
-def setup_L(H, c_ops, num_threads, progress=False):
+def setup_L(H, c_ops, num_threads, progress=False, parallel=False):
     
     """Generate generic Liouvillian for Hamiltonian H and 
     collapse operators c_ops. Use num_threads processors for 
@@ -28,7 +28,7 @@ def setup_L(H, c_ops, num_threads, progress=False):
     
     global nspins, ldim_s, ldim_p
     from indices import indices_elements, indices_elements_inv, get_equivalent_dm_tuple
-    from numpy import complex, concatenate
+    from numpy import concatenate
     from scipy.sparse import lil_matrix, csr_matrix, vstack
     
     from multiprocessing import Pool
@@ -56,20 +56,34 @@ def setup_L(H, c_ops, num_threads, progress=False):
                 arglist.append((element, Hfull, c_ops, c_ops_2, c_ops_dag, ldim_p*ldim_p*num_elements))
         
     
-    #uncomment for parallel version
-    #allocate a pool of threads
-    #if num_threads == None:
-    #    pool = Pool()
-    #else:
-    #    pool = Pool(num_threads)
-    #find all the rows of L
-    #L_lines = pool.map(calculate_L_fixed, arglist)
-    
-    #pool.close()
+    #parallel version
+    if parallel:
+        if num_threads == None:
+            pool = Pool()
+        else:
+            pool = Pool(num_threads)
+        #find all the rows of L
+        L_lines = []
+        if progress:
+            print('Constructing Liouvillian L...')
+            try:
+                import tqdm
+                for line in tqdm.tqdm(pool.imap(calculate_L_fixed, arglist), total=len(arglist)):
+                    L_lines.append(line)
+            except:
+                print('Package tqdm required for progress bar in parallel version')
+                pass
+        if len(L_lines) == 0:
+            L_lines = pool.imap(calculate_L_fixed, arglist)
+        pool.close()
+        #combine into a big matrix                    
+        L = vstack(L_lines)
+        return L
     
     if progress:
         from propagate import Progress
         bar = Progress(ldim_p**2 * num_elements, description='Constructing Liouvillian L...')
+
     #serial version
     L_lines = []
     for count in range(ldim_p*ldim_p*len(indices_elements)):

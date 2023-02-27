@@ -1,5 +1,5 @@
 
-def setup_counterlaser(lamb, gam_c, gam_d, num_threads = None, progress = False):
+def setup_counterlaser(lamb, gam_c, gam_d, num_threads = None, progress = False, parallel = False):
     """Generate Liouvillian for counter rotating interaction, lamb(a*sigmam + adag*sigmap)"""
     
     from operators import tensor, qeye, destroy, create, sigmap, sigmam, sigmaz
@@ -13,7 +13,7 @@ def setup_counterlaser(lamb, gam_c, gam_d, num_threads = None, progress = False)
     c_ops.append(sqrt(gam_c/nspins)*tensor(destroy(ldim_p), qeye(ldim_s)))
     c_ops.append(sqrt(gam_d)*tensor(qeye(ldim_p), sigmam()))
 
-    return setup_L(H, c_ops, num_threads, progress)
+    return setup_L(H, c_ops, num_threads, progress, parallel)
 
 
 def setup_laser(g, Delta, kappa, gam_dn, gam_up, gam_phi, num_threads = None):
@@ -35,7 +35,7 @@ def setup_laser(g, Delta, kappa, gam_dn, gam_up, gam_phi, num_threads = None):
     return setup_L(H, c_ops, num_threads)
     
 
-def setup_3ls(nu, g, kappa, pump, num_threads = None, progress = False):
+def setup_3ls(nu, g, kappa, pump, num_threads = None, progress = False, parallel = False):
     
     """Generate Liouvillian for 3-level system
     H = nu*adag*a + g(a*create(3) + h.c.)
@@ -53,7 +53,7 @@ def setup_3ls(nu, g, kappa, pump, num_threads = None, progress = False):
         sqrt(pump)*tensor(qeye(ldim_p), create(ldim_s)),
             ]
         
-    return setup_L(H, c_ops, num_threads, progress)
+    return setup_L(H, c_ops, num_threads, progress, parallel)
     
 def setup_Dicke(omega, omega0, U, g, gp, kappa, gam_phi, gam_dn, num_threads = None):
     """Generate Liouvillian for Dicke model
