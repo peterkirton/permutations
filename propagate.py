@@ -38,7 +38,7 @@ def time_evolve(L, initial, tend, dt, expect_oper=None, atol=1e-5, rtol=1e-5, pr
     """time evolve matrix L from initial condition initial with step dt to tend"""
     
     from scipy.integrate import ode
-    from numpy import zeros, array, complex
+    from numpy import zeros, array
     from expect import expect_comp
     
     #L=L.todense()
@@ -82,7 +82,7 @@ def steady(L, init=None, maxit=1e6, tol=None):
     
     """calculate steady state of L using sparse eignevalue solver"""
 
-    rho = find_gap(L, init, tol=tol, return_ss=True)   
+    rho = find_gap(L, init, maxiy, tol, return_ss=True)   
 
     return rho
     
@@ -100,10 +100,8 @@ def find_gap(L, init=None, maxit=1e6, tol=None, return_ss=False, k=10):
         tol = 1e-8
     
     gc.collect()
-    if init is None:
-        val, rho = eigs(L, k=k, which = 'SM', maxiter=maxit, tol=tol)
-    else:
-        val, rho = eigs(L, k=k, which = 'SM', maxiter=maxit, v0=init, tol=tol)
+    # use ARPACK shift-invert mode to find eigenvalues near 0
+    val, rho = eigs(L, k=k, sigma=0, which = 'LM', maxiter=maxit, v0=init, tol=tol)
     gc.collect()
 
     #shift any spurious positive eignevalues out of the way
