@@ -100,8 +100,9 @@ def find_gap(L, init=None, maxit=1e6, tol=None, return_ss=False, k=10):
         tol = 1e-8
     
     gc.collect()
-    # use ARPACK shift-invert mode to find eigenvalues near 0
+    # pfw: use ARPACK shift-invert mode to find eigenvalues near 0
     val, rho = eigs(L, k=k, sigma=0, which = 'LM', maxiter=maxit, v0=init, tol=tol)
+    # N.B. unreliable to find mutliple eigenvalues, see https://github.com/scipy/scipy/issues/13571
     gc.collect()
 
     #shift any spurious positive eignevalues out of the way
