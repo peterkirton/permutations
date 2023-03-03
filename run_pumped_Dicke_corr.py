@@ -1,4 +1,4 @@
-from pylab import figure, plot, show, contourf
+from matplotlib.pyplot import figure, plot, show, contourf
 from numpy import sqrt, array, linspace
 from time import time
 
