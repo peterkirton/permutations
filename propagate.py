@@ -4,52 +4,85 @@ class Results:
         self.t = []
         self.expect = []
 
+class Progress:
+    def __init__(self, total, description='', start_step=0):
+        self.description = description
+        self.step = start_step
+        self.end = total-1
+        self.percent = self.calc_percent()
+        self.started = False
 
-def time_evolve(L, initial, tend, dt, expect_oper=None):
+    def calc_percent(self):
+        return int(100*self.step/self.end)
+
+    def update(self, step=None):
+        # print a description at the start of the calculation
+        if not self.started:
+            print('{}{:4d}%'.format(self.description, self.percent), end='', flush=True)
+            self.started = True
+            return
+        # progress one step or to the specified step
+        if step is None:
+            self.step += 1
+        else:
+            self.step = step
+        percent = self.calc_percent()
+        # only waste time printing if % has actually increased one integer
+        if percent > self.percent:
+            print('\b\b\b\b\b{:4d}%'.format(percent), end='', flush=True)
+            self.percent = percent
+        if self.step == self.end:
+            print('', flush=True)
+
+def time_evolve(L, initial, tend, dt, expect_oper=None, atol=1e-5, rtol=1e-5, progress=False):
     """time evolve matrix L from initial condition initial with step dt to tend"""
     
     from scipy.integrate import ode
-    from numpy import zeros, array, complex
+    from numpy import zeros, array
     from expect import expect_comp
     
     #L=L.todense()
     
     t0 = 0
-    r = ode(_intfunc).set_integrator('zvode', method='bdf', atol=1e-5, rtol=1e-5)
+    r = ode(_intfunc).set_integrator('zvode', method='bdf', atol=atol, rtol=rtol)
     r.set_initial_value(initial, t0).set_f_params(L)
     output = Results()
+    # Record initial values
+    output.t.append(r.t)
+    output.rho.append(initial)
+    ntimes = int(tend/dt)+1
+    if progress:
+        bar = Progress(ntimes, description='Time evolution under L...', start_step=1)
     
-
-
     if expect_oper == None:
         while r.successful() and r.t < tend:
             output.rho.append(r.integrate(r.t+dt))
             output.t.append(r.t)
+            if progress:
+                bar.update()
         return output
     else:
-        ntimes = int(tend/dt)
-        n_t=0
         output.expect = zeros((len(expect_oper), ntimes), dtype=complex)
+        output.expect[:,0] = array(expect_comp([initial], expect_oper)).flatten()
+        n_t=1
         while r.successful() and n_t<ntimes:
             rho = r.integrate(r.t+dt)
             output.expect[:,n_t] = array(expect_comp([rho], expect_oper)).flatten()
             output.t.append(r.t)
+            output.rho.append(rho)
             n_t += 1
+            if progress:
+                bar.update()
         return output
-
 
 def _intfunc(t, y, L):
     return (L.dot(y))
-    
-    
-
-    
 
 def steady(L, init=None, maxit=1e6, tol=None):
     
     """calculate steady state of L using sparse eignevalue solver"""
 
-    rho = find_gap(L, init, tol=tol, return_ss=True)   
+    rho = find_gap(L, init, maxit, tol, return_ss=True)   
 
     return rho
     
@@ -67,10 +100,9 @@ def find_gap(L, init=None, maxit=1e6, tol=None, return_ss=False, k=10):
         tol = 1e-8
     
     gc.collect()
-    if init is None:
-        val, rho = eigs(L, k=k, which = 'SM', maxiter=maxit, tol=tol)
-    else:
-        val, rho = eigs(L, k=k, which = 'SM', maxiter=maxit, v0=init, tol=tol)
+    # pfw: use ARPACK shift-invert mode to find eigenvalues near 0
+    val, rho = eigs(L, k=k, sigma=0, which = 'LM', maxiter=maxit, v0=init, tol=tol)
+    # N.B. unreliable to find mutliple eigenvalues, see https://github.com/scipy/scipy/issues/13571
     gc.collect()
 
     #shift any spurious positive eignevalues out of the way
