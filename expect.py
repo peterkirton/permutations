@@ -140,7 +140,8 @@ def setup_convert_rho():
     Note this function simply invokes setup_convert_rho_nrs(1) but is retained for compatibility."""
     # retained for compatibility 
     global convert_rho
-    convert_rho = setup_convert_rho_nrs(1)
+    convert_rho = setup_convert_rho_nrs(0) # No spins
+    convert_rho = setup_convert_rho_nrs(1) # Photon + 1-spin
 
 
 def setup_convert_rho_nrs(nrs=1):
