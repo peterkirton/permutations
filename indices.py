@@ -6,10 +6,10 @@ indices_elements_inv = {}
 with the full set indices for that element
  e.g for 3 spins this could be [s00 s10 s20 s01 s11 s21]
  2) indices_elements_inv maps from a TUPLE containing a list of 
- dm indices to an elemnet in the compressed space
+ dm indices to an element in the compressed space
 
 THESE DICTIONARIES NOW DO NOT INCLUDE THE PHOTON STATE
-The photon state can be caluated using the fact that the full dm is justy the tensor 
+The photon state can be calculated using the fact that the full dm is just the tensor 
 product of the photon with the compressed list of spin indices"""
 
 def list_equivalent_elements():
@@ -67,6 +67,7 @@ def setup_spin_indices(ns):
     for count in range(ldim_s**2):
         spin_indices_temp.append([count])
     spin_indices_temp = array(spin_indices_temp)
+    spin_indices = [array(x) for x in spin_indices_temp] # Used if ns == 1
     
     #loop over all other spins
     for count in range(ns-1):
@@ -81,13 +82,11 @@ def setup_spin_indices(ns):
         spin_indices_temp = copy(spin_indices)
     
     return spin_indices
-        
-    
     
 
 def _index_to_element(index, ns= None):
     """convert a combined spin index to an element with ns spins
-    NOT for convering from a full dm index to an element"""
+    NOT for converting from a full dm index to an element"""
     
     from basis import nspins, ldim_s
     
@@ -100,7 +99,6 @@ def _index_to_element(index, ns= None):
         element.append(index%ldim_s)
         index = (index - element[-1])//ldim_s
     return element
-        
             
 
 def get_equivalent_dm_tuple(dm_element):
@@ -166,9 +164,3 @@ def _comp_tuple(element):
         element_comp.append(element[count]*ldim_s + element[count+nspins])
     return tuple(element_comp)
 
-
-
-
-    
-
-    
