@@ -1,22 +1,23 @@
 ldim_s = []
 ldim_p = []
-nspins =[]
-
-
+nspins = []
 
 def setup_basis(ns, ls, lp):
     """Define global variables"""
     
     from indices import list_equivalent_elements
     from expect import setup_convert_rho
+
+    # basic input checks
+    assert isinstance(ls, int) and ls > 0, "Photon dimension must be positive int"
+    assert isinstance(lp, int) and lp > 1, "Spin dimension must be int greater than 1"
+    assert isinstance(ns, int) and ns > 0, "Number of spins must be positive int"
     
-    #set global variables
+    # set global variables
     global ldim_s, ldim_p, nspins
     ldim_s = ls
     ldim_p = lp
     nspins = ns
-    assert nspins > 1, "Number of spins must be greater than 1."
-
     
 def setup_L(H, c_ops, num_threads, progress=False, parallel=False):
     

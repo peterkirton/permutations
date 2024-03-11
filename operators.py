@@ -65,6 +65,8 @@ def tensor(*args):
     return out
     
 def basis(N, n=0):
+    """Create Fock density matrix for N-level Hilbert space
+    with excitation in level n""" 
     
     if (not isinstance(N, (int, np.integer))) or N < 0:
         raise ValueError("N must be integer N >= 0")
