@@ -53,7 +53,7 @@ t0=time()
 resultscomp = time_evolve(L, initial, tmax, dt, [na, sz])
 tf=time()-t0
 
-print("Time evollution complete")
+print("Time evolution complete")
 print(tf)
 
 #plot time evolution
