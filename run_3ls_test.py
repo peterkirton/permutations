@@ -35,7 +35,7 @@ setup_convert_rho()
 from basis import nspins, ldim_p, ldim_s
 
 t0=time()
-L = setup_3ls(nu, g, kappa, pump, progress=True, parallel=True) 
+L = setup_3ls(nu, g, kappa, pump, progress=True) 
 # setup initial state nphot0 photons and spins down
 initial = setup_rho(basis(ldim_p, nphot0), basis(ldim_s,1))
 print('setup L and basis in {:.1f}s'.format(time()-t0), flush=True)
@@ -48,7 +48,8 @@ setup_convert_rhos_from_ops(ops)
 
 #propagate
 t0=time()
-resultscomp = time_evolve(L, initial, tmax, dt, ops, atol=1e-10, rtol=1e-10)
+resultscomp = time_evolve(L, initial, tmax, dt, ops, atol=1e-8, rtol=1e-8,
+                          progress=True, save_states=True)
 runtime=time()-t0
 
 print("Time evolution complete in {:.0f}s".format(runtime), flush=True)
@@ -73,4 +74,4 @@ ax.plot(ts, ns.real, label='n')
 ax.plot(ts, ns.real, label='n-check', ls='--')
 ax.plot(ts, ps.real, label='pi')
 ax.legend()
-fig.savefig('3ls.pdf', bbox_inches='tight')
+fig.savefig('3ls.png', bbox_inches='tight')

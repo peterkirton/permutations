@@ -71,7 +71,7 @@ tend = tlist[-1]
 dt = tlist[1]-tlist[0]
 
 #calculate two time correlation function
-corr = corr_func(L, rho_ss, adag/ntls, a, tend+dt, dt, nproc)
+corr = corr_func(L, rho_ss, adag/ntls, a, tend+dt/2, dt, nproc)
 
 #calculate steady state spectrum
 spec, omlist = spectrum(L, rho_ss, adag/float(ntls), a, tlist, nproc)

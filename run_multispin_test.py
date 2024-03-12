@@ -69,7 +69,8 @@ t = resultscomp.t
 expect = resultscomp.expect
 
 
-# (Optional) Extract reduced density matrices at each time
+# (Optional) Extract reduced density matrices at each time = must pass
+# save_states=True to time_evolve above.
 #compressed_rhos = resultscomp.rho
 #two_site_rhos = get_rdms(compressed_rhos, nrs=2)
 
